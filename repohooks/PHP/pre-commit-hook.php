@@ -26,6 +26,40 @@ exec("git diff-index --cached --name-status $against | egrep '^(A|M)' | awk '{pr
 $needle            = '/(\.php|\.phtml)$/'; // we only need to grab php files for PHP linting (by extension)
 $exit_status = 0; // if linting is successful, exit with status 0, else exit with status 1
 
+# Use composer to install like so: [composer require --dev phpstan/phpstan]
+
+function statically_analyse_php($level = 2, $bootstrap_file_path = NULL){
+	
+	if(!is_null($bootstrap_file_path)){
+		$arg = "--autoload-file={$bootstrap_file_path} ";
+	}else{
+		$arg = "";
+	}
+
+	foreach ($output as $file) {
+
+        	if (!preg_match($needle, $file)) {
+            		// only check php files
+                    continue;
+        	}
+
+        	$analysis_output = array();
+        	$rc              = 0;
+
+        	exec('phpstan analyse '. escapeshellarg("{$arg}-l {$level} {$file}"), $analysis_output, $rc);
+        	
+            if ($rc == 0) {
+            		continue;
+        	}
+
+        	if($rc == 1){
+            		fwrite(STDOUT, (implode(PHP_EOL, $analysis_output)) . PHP_EOL); // writing to standard output (STDOUT)
+            		$exit_status = 1;
+            		exit($exit_status);
+        	}
+	}
+}
+
 ## {lint_js} is calling Grunt directly, No proxies
 
 function lint_js($arg = 'jshint'){
@@ -53,9 +87,11 @@ function lint_php(){
         $lint_output = array();
         $rc              = 0;
         exec('php -l '. escapeshellarg($file), $lint_output, $rc);
+        
         if ($rc == 0) {
             continue;
         }
+        
         if($rc == 1){
             fwrite(STDOUT, (implode(PHP_EOL, $lint_output)) . PHP_EOL); // writing to standard output (STDOUT)
             $exit_status = 1;
@@ -65,6 +101,7 @@ function lint_php(){
 }
 
 lint_js();
+statically_analyse_php();
 lint_php();
 
 ?>

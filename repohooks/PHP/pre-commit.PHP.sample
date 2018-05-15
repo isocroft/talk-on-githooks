@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Prem-Commit Hook
+
+php ".\.git\hooks\pre-commit-hook.php"

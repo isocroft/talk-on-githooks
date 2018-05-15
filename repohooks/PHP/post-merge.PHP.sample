@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Post-Merge Hook
+
+php ".\.git\hooks\post-merge-hook.php"
